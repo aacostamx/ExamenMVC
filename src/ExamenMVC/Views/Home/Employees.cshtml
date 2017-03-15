@@ -1,0 +1,101 @@
+﻿@{
+    ViewData["Title"] = "Employees Page";
+}
+
+<div class="container" ng-controller="EmployeeController">
+    <h2>All Employees</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr class="active">
+                    <th>Employee Id</th>
+                    <th>Employee Name</th>
+                    <th>Employee Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tr ng-repeat="empModel in ListEmployees">
+                <td>{{empModel.employeeId}}</td>
+                <td>{{empModel.employeeName}}</td>
+                <td>{{empModel.employeeNumber}}</td>
+                <td>
+                    <button class="btn btn-danger" type="button" ng-click="deleteEmployee(empModel)"><i class="glyphicon glyphicon-trash"></i> Delete</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="~/lib/angular/angular.min.js"></script>
+
+    <script>
+        angular.module('myExamMvcApp', [])
+            .controller('EmployeeController', function ($scope, $http, $location, $window) {
+                $scope.message = '';
+                $scope.result = "color-default";
+                $scope.ListEmployees = null;
+
+                GetAllEmployees();
+
+                function GetAllEmployees() {
+                    var url = window.location.origin;
+                    url = url.concat('/Home/GetAllEmployees/');
+
+                    $http.get(url)
+                    .success(function (data, status, headers, config) {
+                        $scope.ListEmployees = data;
+                    })
+                    .error(function (data, status, headers, config) {
+                        $scope.message = 'Unexpected error while loading data!';
+                        $scope.result = "color-red";
+                        console.log($scope.message);
+                    });
+                };
+
+                $scope.deleteEmployee = function (empModel) {
+
+                    swal({
+                        title: "Are you sure?",
+                        text: "You will delete employee name " + empModel.employeeName + " also phone numbers and tasks associated!",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#DD6B55",
+                        confirmButtonText: "Yes, delete it!",
+                        cancelButtonText: "No, cancel!",
+                        closeOnConfirm: false,
+                        closeOnCancel: false
+                    },
+                    function (isConfirm) {
+                        if (isConfirm) {
+                            var url = window.location.origin;
+                            url = url.concat('/Home/DeleteEmployee/');
+                            $http.delete(url + empModel.employeeId)
+                            .success(function (data, status, headers, config) {
+                                if (data.success === true) {
+                                    $scope.message = empModel.employeeName + ' deleted from record!';
+                                    $scope.result = "color-green";
+                                    GetAllEmployees();
+                                    console.log(data);
+                                    swal("Deleted!", "The employee " + empModel.employeeName + " was deleted!", "success");
+                                }
+                                else {
+                                    $scope.message = 'Error on deleting record!';
+                                    $scope.result = "color-red";
+                                }
+                            })
+                            .error(function (data, status, headers, config) {
+                                $scope.message = 'Unexpected error while deleting data!';
+                                $scope.result = "color-red";
+                                console.log($scope.message);
+                            });
+                        } else {
+                            swal("Cancelled", "Your didn't deleted employee! ", "error");
+                        }
+                    });
+                };
+            })
+    </script>
+}

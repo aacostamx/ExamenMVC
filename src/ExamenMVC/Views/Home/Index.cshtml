@@ -1,0 +1,154 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<br />
+<div class="container">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h2>Add employee, phone numbers and tasks</h2></div>
+        <div class="panel-body">
+            <form id="frmEmployee">
+
+                <label for="EmployeeName" class="col-2 col-form-label">Employee Name:</label>
+                <div class="col-10">
+                    <input class="form-control" type="text" min="0" id="EmployeeName" name="EmployeeName">
+                </div>
+                <br />
+
+                <label for="EmployeeNumber" class="col-2 col-form-label">Employee Number:</label>
+                <div class="col-10">
+                    <input class="form-control" type="number" id="EmployeeNumber" name="EmployeeNumber">
+                </div>
+                <br />
+
+                <label for="PhoneNumber" class="col-2 col-form-label">Phone Numbers:</label>
+                <div class="input-group control-group after-add-more-phones" style="display: block;">
+                    <input type="tel" name="PhoneNumber" id="PhoneNumber" class="form-control">
+                    <div class="input-group-btn">
+                        <button class="btn btn-success add-more-phones" type="button"><i class="glyphicon glyphicon-plus"></i> Add</button>
+                    </div>
+                </div>
+
+                <div class="copy-phone-fields hide">
+                    <div class="control-group-phones input-group" style="margin-top:10px; display: block;">
+                        <input type="tel" name="PhoneNumber" id="PhoneNumber" class="form-control">
+                        <div class="input-group-btn">
+                            <button class="btn btn-danger remove" type="button"><i class="glyphicon glyphicon-remove"></i> Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <br />
+
+                <label for="TaskName" class="col-2 col-form-label">Task Names:</label>
+                <div class="input-group control-group after-add-more-tasks" style="display: block;">
+                    <input type="text" name="TaskName" id="TaskName" class="form-control">
+                    <div class="input-group-btn">
+                        <button class="btn btn-success add-more-tasks" type="button"><i class="glyphicon glyphicon-plus"></i> Add</button>
+                    </div>
+                </div>
+
+                <div class="copy-task-fields hide">
+                    <div class="control-group-tasks input-group" style="margin-top:10px; display: block;">
+                        <input type="text" name="TaskName" id="TaskName" class="form-control">
+                        <div class="input-group-btn">
+                            <button class="btn btn-danger remove" type="button"><i class="glyphicon glyphicon-remove"></i> Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <br />
+                <button type="button" class="btn btn-primary" onclick="EmployeeController.addEmployee();">Save</button>
+                <button type="button" class="btn btn-danger" onclick="EmployeeController.clear();">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section scripts
+{
+    <script>
+        var EmployeeController = {
+            init: function () {
+                //Dynamic Phones
+                $(".add-more-phones").click(function () {
+                    var html = $(".copy-phone-fields").html();
+                    $(".after-add-more-phones").after(html);
+                });
+
+                $("body").on("click", ".remove", function () {
+                    $(this).parents(".control-group-phones").remove();
+                });
+
+                //Dynamic Tasks
+                $(".add-more-tasks").click(function () {
+                    var html = $(".copy-task-fields").html();
+                    $(".after-add-more-tasks").after(html);
+                });
+
+                $("body").on("click", ".remove", function () {
+                    $(this).parents(".control-group-tasks").remove();
+                });
+            },
+            addEmployee: function () {
+                var employeeName, employeeNumber, phoneNumber, taskName;
+                employeeName = $('#EmployeeName').val();
+                employeeNumber = $('#EmployeeNumber').val();
+                phoneNumber = [];
+                taskName = [];
+
+
+                if (!employeeName) {
+                    swal({ title: "Error!", text: "Employee Name is required!", type: "error" });
+                }
+                else if (!employeeNumber) {
+
+                    swal({ title: "Error!", text: "Employee Number is required!", type: "error" });
+                }
+                else {
+                    $('input[name=PhoneNumber]').each(function (index, item) {
+                        var val = $(item).val();
+                        if (val) {
+                            var phone = { PhoneNumber: val, EmployeeNumber: employeeNumber }
+                            phoneNumber.push(phone);
+                        }
+                    });
+                    $('input[name=TaskName]').each(function (index, item) {
+                        var val = $(item).val();
+                        if (val) {
+                            var task = { TaskName: val, EmployeeId: 0 }
+                            taskName.push(task);
+                        }
+                    });
+
+                    var EmployeeVM = { EmployeeName: employeeName, EmployeeNumber: employeeNumber, Phones: phoneNumber, Tasks: taskName };
+   
+                    var url = window.location.origin;
+                    url = url.concat('/Home/AddEmployee/');
+
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        data: EmployeeVM,
+                        success: function (data) {
+                            console.log(data);
+                            swal({ title: "Success!", text: 'Added successfully! EmployeeId: ' + data.employeeId, type: "success" });
+                        },
+                        error: function (result) {
+                            console.log('ERROR ' + result.status + ' ' + result.statusText);
+                        }
+                    });
+
+
+                }
+            },
+            clear: function () {
+                $('#frmEmployee').trigger("reset");
+            }
+        }
+
+        $(document).ready(function () {
+            EmployeeController.init();
+        });
+    </script>
+}
